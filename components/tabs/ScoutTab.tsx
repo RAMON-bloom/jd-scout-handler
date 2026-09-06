@@ -76,7 +76,7 @@ const reassembleGroupFromSections = (
         const belongsToGroup = matchedPs ? matchedPs.group === groupId : isFirstGroup;
         if (!belongsToGroup) return;
 
-        let block = section.content;
+        let block = `${section.title}\n${section.content}`;
         if (section.promptSectionId) {
             const inserted = phrases
                 .filter(p => p.insertionPoint === section.promptSectionId && p.value.trim())

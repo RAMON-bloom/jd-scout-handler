@@ -108,6 +108,7 @@ ${s.content}`).join('\n')}
     : '';
 
   const sectionInstructions = enabledSections.map(s => `- **セクションID: "${s.id}"** / **タイトル「${s.title}」**: ${s.instruction}`).join('\n');
+  const sectionIdList = enabledSections.map(s => `"${s.id}"`).join(', ');
 
   const sectionInsertedPhrases = fixedPhrases.filter(p => p.value && enabledSections.some(s => s.id === p.insertionPoint));
 
@@ -126,7 +127,8 @@ ${fixedPhrasesContext}
 
 # 生成の指示
 1. 以下の各セクションに対して、指定された指示に従って内容を生成してください。
-   JSONの id フィールドには対応するセクションの「セクションID」を設定し、title フィールドには「タイトル」をそのまま設定してください。
+   出力JSONのキーには、対応する「セクションID」をそのまま使用してください。
+   **以下に列挙したセクションIDは1つも省略せず、必ず全て（${sectionIdList}）に対して値を生成してください。**
 ${sectionInstructions}
 
 2. **重要：定型文との重複防止（最重要・厳守）**
@@ -147,21 +149,10 @@ ${sectionInsertedPhrases.map(p => `   - セクション「${enabledSections.find
 
   const schema = {
     type: Type.OBJECT,
-    properties: {
-      sections: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            id: { type: Type.STRING, description: 'PromptSectionのID' },
-            title: { type: Type.STRING, description: 'セクションのタイトル' },
-            content: { type: Type.STRING, description: '生成された本文' }
-          },
-          required: ['id', 'title', 'content']
-        }
-      }
-    },
-    required: ['sections']
+    properties: Object.fromEntries(
+      enabledSections.map(s => [s.id, { type: Type.STRING, description: `セクション「${s.title}」の生成本文` }])
+    ),
+    required: enabledSections.map(s => s.id)
   };
 
   try {
@@ -180,30 +171,23 @@ ${sectionInsertedPhrases.map(p => `   - セクション「${enabledSections.find
     });
 
     const jsonText = (rawResult || "").trim();
-    let sections: AISection[] = [];
+    let parsedResult: Record<string, any> = {};
     try {
       let cleanJson = jsonText;
       if (cleanJson.startsWith("```")) {
         cleanJson = cleanJson.replace(/^```json?\s*/i, "").replace(/\s*```$/, "");
       }
-      const parsedResult = JSON.parse(cleanJson);
-      if (parsedResult && Array.isArray(parsedResult.sections)) {
-        sections = parsedResult.sections;
-      } else if (Array.isArray(parsedResult)) {
-        sections = parsedResult;
-      } else if (parsedResult && typeof parsedResult === 'object') {
-        const possibleSections = parsedResult.sections || parsedResult.data || Object.values(parsedResult);
-        if (Array.isArray(possibleSections)) {
-          sections = possibleSections;
-        }
-      }
+      parsedResult = JSON.parse(cleanJson);
     } catch (parseErr) {
       console.error("JSON parsing failed", parseErr);
-    }
-
-    if (!sections || !Array.isArray(sections)) {
       throw new Error("AIの応答をセクションデータとして解析できませんでした。");
     }
+
+    const sections: AISection[] = enabledSections.map(s => ({
+      id: s.id,
+      title: s.title,
+      content: typeof parsedResult[s.id] === 'string' ? parsedResult[s.id] : '',
+    }));
 
     return sections;
   } catch (error: any) {
