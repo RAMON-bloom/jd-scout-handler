@@ -11,6 +11,8 @@ interface ResultGroupsProps {
     data: AnalysisResult;
 }
 
+const stripLeadingBullet = (s: string) => s.replace(/^[ \t]*[-*+・]\s*/, '');
+
 const ResultGroups: React.FC<ResultGroupsProps> = ({ fields, groups, data }) => {
     const [copiedGroups, setCopiedGroups] = useState<Record<number, boolean>>({});
     const [copiedItem, setCopiedItem] = useState<string | null>(null);
@@ -31,9 +33,7 @@ const ResultGroups: React.FC<ResultGroupsProps> = ({ fields, groups, data }) => 
         const text = groupFields.map(f => {
             const val = data[f.id];
             if (!val) return '';
-            const content = Array.isArray(val) ? val.join('\n') : val;
-            const fullLabel = `${f.prefix || ''}${f.label}${f.suffix || ''}`;
-            return `${fullLabel}\n${content}`;
+            return Array.isArray(val) ? val.map(stripLeadingBullet).join('\n') : val;
         }).filter(t => t !== '').join('\n\n');
 
         navigator.clipboard.writeText(text).then(() => {
@@ -43,7 +43,7 @@ const ResultGroups: React.FC<ResultGroupsProps> = ({ fields, groups, data }) => 
     }, [data]);
 
     const handleCopyItem = useCallback((text: string, key: string) => {
-        navigator.clipboard.writeText(text).then(() => {
+        navigator.clipboard.writeText(stripLeadingBullet(text)).then(() => {
             setCopiedItem(key);
             setTimeout(() => setCopiedItem(null), 2000);
         });
