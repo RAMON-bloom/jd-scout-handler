@@ -147,6 +147,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, fields, 
                                                 <input type="checkbox" checked={field.isEnabled} onChange={e => handleFieldChange(field.id, { isEnabled: e.target.checked })} className="w-4 h-4 text-cyan-600 rounded" />
                                                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400">有効</span>
                                             </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" checked={field.includeLabelInCopy !== false} onChange={e => handleFieldChange(field.id, { includeLabelInCopy: e.target.checked })} className="w-4 h-4 text-cyan-600 rounded" />
+                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">コピーに見出しを含める</span>
+                                            </label>
                                         </div>
                                         <button type="button" onClick={() => handleRemoveField(field.id)} className="p-1.5 text-slate-400 hover:text-red-500">
                                             <TrashIcon className="h-4 w-4" />

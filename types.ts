@@ -16,6 +16,7 @@ export interface FieldConfig {
   isEnabled: boolean;
   prefix?: string;
   suffix?: string;
+  includeLabelInCopy?: boolean;
 }
 
 export interface AnalysisResult {

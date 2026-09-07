@@ -33,7 +33,10 @@ const ResultGroups: React.FC<ResultGroupsProps> = ({ fields, groups, data }) => 
         const text = groupFields.map(f => {
             const val = data[f.id];
             if (!val) return '';
-            return Array.isArray(val) ? val.map(stripLeadingBullet).join('\n') : val;
+            const content = Array.isArray(val) ? val.map(stripLeadingBullet).join('\n') : val;
+            if (f.includeLabelInCopy === false) return content;
+            const fullLabel = `${f.prefix || ''}${f.label}${f.suffix || ''}`;
+            return `${fullLabel}\n${content}`;
         }).filter(t => t !== '').join('\n\n');
 
         navigator.clipboard.writeText(text).then(() => {
